@@ -8,7 +8,12 @@ import com.java.irembo_backend.requests.AuthenticationRequest;
 import com.java.irembo_backend.requests.RegisterRequest;
 import com.java.irembo_backend.requests.ResetPasswordRequest;
 import com.java.irembo_backend.response.AuthenticationResponse;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +32,7 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final JavaMailSender javaMailSender;
 
     private final static Integer LENGTH = 8;
 
@@ -101,12 +107,35 @@ public class AuthenticationService {
         };
     }
 
-    public String forgotPassword(ResetPasswordRequest resetPasswordRequest){
+
+
+    public void sendEmail(String to, String subject, String htmlContent) throws MessagingException {
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(htmlContent, true); // true indicates HTML content
+
+        javaMailSender.send(message);
+    }
+    public String forgotPassword(ResetPasswordRequest resetPasswordRequest) throws MessagingException {
         var user = userRepository.findByEmail(resetPasswordRequest.getEmail());
         if (!user.isEmpty()){
             Integer otp = createRandomOneTimePassword().get();
             userRepository.updateOtpById(user.get().getEmail(), otp);
-            // logic to send the otp to the email
+            String text = "<html>"
+                    + "<body>"
+                    + "<p>Dear User,</p>"
+                    + "<p>You have requested to reset your password on the Irembo application.</p>"
+                    + "Please use the below OTP: <h4 style=\"font-size: 18px; font-weight: bold; color: #4285f4;\">" + otp + "</h4>"
+                    + "<p>If you did not request this password reset, please ignore this email.</p>"
+                    + "<p>Thank you,<br />"
+                    + "The Irembo Team</p>"
+                    + "</body>"
+                    + "</html>";
+            String to = user.get().getEmail();
+            String subject = "OTP to reset the password for Irembo challenge application";
+            sendEmail(to, subject, text);
         return otp.toString();
         }
     return "user not found";

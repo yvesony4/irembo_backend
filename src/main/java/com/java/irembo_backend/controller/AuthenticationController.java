@@ -5,6 +5,7 @@ import com.java.irembo_backend.requests.RegisterRequest;
 import com.java.irembo_backend.requests.ResetPasswordRequest;
 import com.java.irembo_backend.response.AuthenticationResponse;
 import com.java.irembo_backend.service.AuthenticationService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("forgot_password")
-    public ResponseEntity<String> forgotPassword(@RequestBody ResetPasswordRequest resetPasswordRequest){
+    public ResponseEntity<String> forgotPassword(@RequestBody ResetPasswordRequest resetPasswordRequest) throws MessagingException {
         return ResponseEntity.ok(authenticationService.forgotPassword(resetPasswordRequest));
     }
 
