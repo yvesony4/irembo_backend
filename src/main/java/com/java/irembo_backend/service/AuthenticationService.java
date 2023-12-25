@@ -1,9 +1,8 @@
 package com.java.irembo_backend.service;
 
 import com.java.irembo_backend.config.JwtService;
-import com.java.irembo_backend.model.MaritalStatus;
-import com.java.irembo_backend.model.Role;
-import com.java.irembo_backend.model.User;
+import com.java.irembo_backend.model.*;
+import com.java.irembo_backend.repository.TokenRepository;
 import com.java.irembo_backend.repository.UserRepository;
 import com.java.irembo_backend.requests.AuthenticationRequest;
 import com.java.irembo_backend.requests.RegisterRequest;
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class AuthenticationService {
 
     private final UserRepository userRepository;
+    private final TokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
@@ -46,17 +46,28 @@ public class AuthenticationService {
                 .maritalStatus(status)
                 .nationality(request.getNationality())
                 .build();
-        userRepository.save(user);
+        var savedUser = userRepository.save(user);
         var jwtToken = jwtService.generateToken(user);
+        saveUserToken(savedUser, jwtToken);
         return AuthenticationResponse.builder().token(jwtToken)
                 .build();    }
+
+    private void saveUserToken(User user, String jwtToken) {
+        var token = Token.builder().user(user)
+                .token(jwtToken)
+                .tokenType(TokenType.BEARER)
+                .revoked(false)
+                .expired(false)
+                .build();
+        tokenRepository.save(token);
+    }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow();
-
         var jwtToken = jwtService.generateToken(user);
+        saveUserToken(user,jwtToken);
         return AuthenticationResponse.builder().token(jwtToken)
                 .build();
     }
