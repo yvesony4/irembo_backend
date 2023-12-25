@@ -1,16 +1,15 @@
 package com.java.irembo_backend.model;
 
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,20 +18,25 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "user")
+@Entity
+@Table(name = "users")
 public class User implements UserDetails {
     @Id
-    private String id;
+    @GeneratedValue
+    private int id;
     private String firstName;
     private String lastName;
     private String email;
     private String password;
+    @Enumerated(EnumType.STRING)
     private Role role;
     private String gender;
     private int age;
     private Date dateOfBirth;
     private MaritalStatus maritalStatus;
     private String nationality;
+    @OneToMany(mappedBy = "user")
+    private List<Token> tokens;
 
     @Override
     public String getPassword() {
