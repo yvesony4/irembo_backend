@@ -1,4 +1,4 @@
-package com.java.irembo_backend.requests;
+package com.java.irembo_backend.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ResetPasswordRequest {
-    private String email;
+public class PasswordResetResponse {
+    private int responseCode;
+    private String responseMessage;
 }

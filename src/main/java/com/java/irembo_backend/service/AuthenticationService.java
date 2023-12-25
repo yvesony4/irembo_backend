@@ -5,13 +5,13 @@ import com.java.irembo_backend.model.*;
 import com.java.irembo_backend.repository.TokenRepository;
 import com.java.irembo_backend.repository.UserRepository;
 import com.java.irembo_backend.requests.AuthenticationRequest;
+import com.java.irembo_backend.requests.PasswordResetRequest;
 import com.java.irembo_backend.requests.RegisterRequest;
-import com.java.irembo_backend.requests.ResetPasswordRequest;
+import com.java.irembo_backend.requests.ForgotPasswordRequest;
 import com.java.irembo_backend.response.AuthenticationResponse;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,7 +20,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.util.Random;
 import java.util.function.Supplier;
 
 @Service
@@ -95,7 +94,7 @@ public class AuthenticationService {
                 .build();
     }
 
-    public static Supplier<Integer> createRandomOneTimePassword() {
+    private static Supplier<Integer> createRandomOneTimePassword() {
         return () -> {
             SecureRandom random = new SecureRandom();
             StringBuilder oneTimePassword = new StringBuilder();
@@ -109,7 +108,7 @@ public class AuthenticationService {
 
 
 
-    public void sendEmail(String to, String subject, String htmlContent) throws MessagingException {
+    private void sendEmail(String to, String subject, String htmlContent) throws MessagingException {
         MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true);
         helper.setTo(to);
@@ -118,8 +117,8 @@ public class AuthenticationService {
 
         javaMailSender.send(message);
     }
-    public String forgotPassword(ResetPasswordRequest resetPasswordRequest) throws MessagingException {
-        var user = userRepository.findByEmail(resetPasswordRequest.getEmail());
+    public int forgotPassword(ForgotPasswordRequest forgotPasswordRequest) throws MessagingException {
+        var user = userRepository.findByEmail(forgotPasswordRequest.getEmail());
         if (!user.isEmpty()){
             Integer otp = createRandomOneTimePassword().get();
             userRepository.updateOtpById(user.get().getEmail(), otp);
@@ -136,9 +135,33 @@ public class AuthenticationService {
             String to = user.get().getEmail();
             String subject = "OTP to reset the password for Irembo challenge application";
             sendEmail(to, subject, text);
-        return otp.toString();
+        return 200;
         }
-    return "user not found";
+    return 404;
+    }
+
+
+    public int resetPassword(PasswordResetRequest passwordResetRequest){
+        var user = userRepository.findByEmail(passwordResetRequest.getEmail());
+        if (!user.isEmpty()){
+            if (user.get().getEmail().equals(passwordResetRequest.getEmail())){
+                if (user.get().getOtp() != passwordResetRequest.getOtp()){
+                    return 405;
+                } else if (!passwordResetRequest.getPassword().equals(passwordResetRequest.getConfirmPassword())){
+                    return 406;
+                }else
+                {
+                    userRepository.updatePasswordByEmail(user.get().getEmail(), passwordEncoder.encode(passwordResetRequest.getPassword()));
+                    return 200;
+                }
+            }else {
+                return 404;
+            }
+        }else {
+            return 503;
+        }
+
+
     }
 
 }
