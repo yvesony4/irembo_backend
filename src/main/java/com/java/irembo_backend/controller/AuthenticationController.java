@@ -2,6 +2,7 @@ package com.java.irembo_backend.controller;
 
 import com.java.irembo_backend.requests.AuthenticationRequest;
 import com.java.irembo_backend.requests.RegisterRequest;
+import com.java.irembo_backend.requests.ResetPasswordRequest;
 import com.java.irembo_backend.response.AuthenticationResponse;
 import com.java.irembo_backend.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
@@ -24,5 +25,11 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationResponse> register(@RequestBody AuthenticationRequest request){
         return ResponseEntity.ok(authenticationService.authenticate(request));
     }
+
+    @PostMapping("forgot_password")
+    public ResponseEntity<String> forgotPassword(@RequestBody ResetPasswordRequest resetPasswordRequest){
+        return ResponseEntity.ok(authenticationService.forgotPassword(resetPasswordRequest));
+    }
+
 
 }

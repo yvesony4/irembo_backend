@@ -37,6 +37,7 @@ public class User implements UserDetails {
     private String nationality;
     @OneToMany(mappedBy = "user")
     private List<Token> tokens;
+    private int otp;
 
     @Override
     public String getPassword() {
